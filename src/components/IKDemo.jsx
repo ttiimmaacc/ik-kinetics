@@ -1,6 +1,6 @@
 import React from "react";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Sky } from "@react-three/drei";
+import { OrbitControls, Sky, GizmoHelper, GizmoViewport, GizmoViewcube } from "@react-three/drei";
 import Ground from "./Ground";
 import LegWithIK from "./LegWithIK";
 
@@ -16,7 +16,14 @@ const IKDemo = () => {
         <Ground />
         <LegWithIK />
         <OrbitControls makeDefault />
-        <gridHelper />
+        <gridHelper position={[0,0,0]} />
+        <GizmoHelper
+        alignment="bottom-right" // widget alignment within scene
+        margin={[80, 80]} // widget margins (X, Y) 
+        >
+        <GizmoViewport axisColors={['red', 'green', 'blue']} labelColor="black" />
+         <GizmoViewcube />
+        </GizmoHelper>
       </Canvas>
     </div>
   );

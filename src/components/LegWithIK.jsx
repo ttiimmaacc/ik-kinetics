@@ -83,7 +83,7 @@ const LegWithIK = () => {
       segments: Array(3)
         .fill()
         .map(() => new THREE.Vector3()),
-      segmentLengths: [1, 2.5, 0.8],
+      segmentLengths: [1, 1.5, 1],
       targetPos: new THREE.Vector3(),
       maxStretch: 2,
       stepDuration: 20,
@@ -132,14 +132,13 @@ const LegWithIK = () => {
       .add(firstSegmentDir.multiplyScalar(legData.segmentLengths[0]));
 
     // Last segment adjustment
+    const lastSegmentLength = legData.segmentLengths[2];
     const lastSegmentDir = new THREE.Vector3(0, 1, 0).normalize();
-    legData.segments[2]
-      .copy(adjustedFootPos)
-      .add(lastSegmentDir.multiplyScalar(legData.segmentLengths[2]));
+legData.segments[2].copy(adjustedFootPos).add(lastSegmentDir.multiplyScalar(lastSegmentLength));
 
     // Middle segment adjustment
     legData.segments[1].copy(legData.segments[2]).sub(legData.segments[0]);
-    //legData.segments[1].setLength(legData.segmentLengths[1]);
+    legData.segments[1].normalize().multiplyScalar(legData.segmentLengths[1]);
     legData.segments[1].add(legData.segments[0]);
 
     // Ensure the foot position matches the target
@@ -219,7 +218,7 @@ const LegWithIK = () => {
     <group>
       {/* Body with transform controls */}
       <TransformControls object={bodyRef} mode="translate">
-        <mesh ref={bodyRef} position={[0, 4, 0]}>
+        <mesh ref={bodyRef} position={[0, 2.5, 0]}>
           <sphereGeometry args={[0.3]} />
           <meshStandardMaterial color="#F26157" />
 
