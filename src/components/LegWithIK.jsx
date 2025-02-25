@@ -76,6 +76,8 @@ const LegWithIK = () => {
   const stepProgressRef = useRef(0);
   const isSteppingRef = useRef(false);
 
+  const sphereRef = useRef(); // Ref for the sphere
+
   const fabrikSolver = useRef(null);
 
   const legData = useMemo(
@@ -134,7 +136,9 @@ const LegWithIK = () => {
     // Last segment adjustment
     const lastSegmentLength = legData.segmentLengths[2];
     const lastSegmentDir = new THREE.Vector3(0, 1, 0).normalize();
-legData.segments[2].copy(adjustedFootPos).add(lastSegmentDir.multiplyScalar(lastSegmentLength));
+    legData.segments[2]
+      .copy(adjustedFootPos)
+      .add(lastSegmentDir.multiplyScalar(lastSegmentLength));
 
     // Middle segment adjustment
     legData.segments[1].copy(legData.segments[2]).sub(legData.segments[0]);
@@ -154,6 +158,7 @@ legData.segments[2].copy(adjustedFootPos).add(lastSegmentDir.multiplyScalar(last
     const targetWorldPos = new THREE.Vector3();
     target.getWorldPosition(targetWorldPos);
 
+    // Raycast to find intersection with ground
     const raycaster = new THREE.Raycaster(
       targetWorldPos,
       new THREE.Vector3(0, -1, 0)
@@ -169,6 +174,11 @@ legData.segments[2].copy(adjustedFootPos).add(lastSegmentDir.multiplyScalar(last
       if (distanceLineRef.current) {
         const points = [footPositionRef.current, legData.targetPos];
         distanceLineRef.current.geometry.setFromPoints(points);
+      }
+
+      // Update sphere position to match intersection point
+      if (sphereRef.current) {
+        sphereRef.current.position.copy(legData.targetPos);
       }
 
       const distanceToTarget = footPositionRef.current.distanceTo(
@@ -223,12 +233,18 @@ legData.segments[2].copy(adjustedFootPos).add(lastSegmentDir.multiplyScalar(last
           <meshStandardMaterial color="#F26157" />
 
           {/* Target point attached to body */}
-          <mesh ref={targetRef} position={[-1, -1, 0]}>
+          <mesh ref={targetRef} position={[0, 0, 0]}>
             <sphereGeometry args={[0.1]} />
             <meshStandardMaterial color="yellow" />
           </mesh>
         </mesh>
       </TransformControls>
+
+      {/* Sphere at raycast intersection */}
+      <mesh ref={sphereRef}>
+        <sphereGeometry args={[0.2]} />
+        <meshStandardMaterial color="blue" />
+      </mesh>
 
       {/* Leg segments */}
       {segmentRefs.current.map((ref, i) => (
