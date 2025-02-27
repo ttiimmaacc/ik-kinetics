@@ -78,6 +78,20 @@ const LegWithIK = () => {
 
   const sphereRef = useRef(); // Ref for the sphere
 
+  // Target segment positions calculated by FABRIK
+  const targetSegments = useRef(
+    Array(3)
+      .fill()
+      .map(() => new THREE.Vector3())
+  );
+
+  // Current segment positions that will gradually move toward target
+  const currentSegments = useRef(
+    Array(3)
+      .fill()
+      .map(() => new THREE.Vector3())
+  );
+
   const fabrikSolver = useRef(null);
 
   const legData = useMemo(
@@ -87,7 +101,7 @@ const LegWithIK = () => {
         .map(() => new THREE.Vector3()),
       segmentLengths: [1, 1.5, 1],
       targetPos: new THREE.Vector3(),
-      maxStretch: 2,
+      maxStretch: 1.5,
       stepDuration: 20,
       bodyOffset: new THREE.Vector3(-0.25, 0, 0),
     }),
@@ -109,7 +123,7 @@ const LegWithIK = () => {
 
     // Adjust foot position
     const adjustedFootPos = footPos.clone();
-    const footOffset = new THREE.Vector3(-1, 0, 0); // Adjust this offset as needed
+    const footOffset = new THREE.Vector3(0, 0, 0); // Adjust this offset as needed
     adjustedFootPos.add(footOffset);
 
     // Solve using FABRIK algorithm
@@ -135,7 +149,7 @@ const LegWithIK = () => {
 
     // Last segment adjustment
     const lastSegmentLength = legData.segmentLengths[2];
-    const lastSegmentDir = new THREE.Vector3(0, 1, 0).normalize();
+    const lastSegmentDir = new THREE.Vector3(0, 0, 0).normalize();
     legData.segments[2]
       .copy(adjustedFootPos)
       .add(lastSegmentDir.multiplyScalar(lastSegmentLength));
@@ -211,14 +225,25 @@ const LegWithIK = () => {
 
       calculateLegPositions(basePos, footPositionRef.current);
 
+      // Update the segments with the current joint positions
       segmentRefs.current.forEach((ref, i) => {
         if (ref.current) {
           const start = i === 0 ? basePos : legData.segments[i - 1];
           const end = legData.segments[i];
 
           ref.current.position.copy(start.clone().add(end).multiplyScalar(0.5));
-          ref.current.lookAt(end);
-          ref.current.scale.set(0.2, 0.2, start.distanceTo(end));
+
+          // Only rotate the first and middle segments, not the last one
+          if (i < 2) {
+            ref.current.lookAt(end);
+            ref.current.scale.set(0.2, 0.2, start.distanceTo(end));
+          } else {
+            // For the last segment, keep it in a fixed orientation
+            // We'll use a fixed downward orientation (adjust as needed)
+            // ref.current.lookAt(end);
+            ref.current.rotation.set(1.5, 0, 0);
+            ref.current.scale.set(0.2, 0.2, start.distanceTo(end));
+          }
         }
       });
     }
@@ -233,7 +258,7 @@ const LegWithIK = () => {
           <meshStandardMaterial color="#F26157" />
 
           {/* Target point attached to body */}
-          <mesh ref={targetRef} position={[0, 0, 0]}>
+          <mesh ref={targetRef} position={[-1, 0, 0]}>
             <sphereGeometry args={[0.1]} />
             <meshStandardMaterial color="yellow" />
           </mesh>
