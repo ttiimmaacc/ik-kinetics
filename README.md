@@ -6,7 +6,7 @@ A React Three Fiber-based demonstration of inverse kinematics (IK) using the FAB
 
 IK Kinetics is an interactive 3D visualization that demonstrates how inverse kinematics can be used to create natural-looking limb movements. The project uses the FABRIK (Forward And Backward Reaching Inverse Kinematics) algorithm with constraints, rest pose biasing, and automated stepping behavior.
 
-![IK Kinetics Demo](public/demo-screenshot.png)
+![IK Kinetics Demo](public/demo-screenshot.gif)
 
 ## Features
 
