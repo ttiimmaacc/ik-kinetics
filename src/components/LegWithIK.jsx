@@ -25,15 +25,14 @@ class FABRIK {
 
   // Apply constraints to angle between segments
   applyConstraints() {
-    for (let i = 1; i < this.joints.length - 1; i++) {
-      // loop through each joint (except the first and last)
+    for (let i = 1; i < this.joints.length - 1; i++) {// <-- loop through each joint (except the first and last)
       const prev = this.joints[i - 1];
-      const current = this.joints[i]; // For each joint, we look at the previous, current & next joints
+      const current = this.joints[i]; // <-- For each joint, we look at the previous, current & next joints
       const next = this.joints[i + 1];
 
       // Get vectors representing the segments
-      const v1 = new THREE.Vector3().subVectors(current, prev); // vector from previous to current joint
-      const v2 = new THREE.Vector3().subVectors(next, current); // vector from current to next joint
+      const v1 = new THREE.Vector3().subVectors(current, prev); // <-- vector from previous to current joint
+      const v2 = new THREE.Vector3().subVectors(next, current); // <-- vector from current to next joint
 
       // Calculate angle between segments
       const angle = v1.angleTo(v2);
@@ -294,20 +293,20 @@ const LegWithIK = () => {
       // Knee joint - position based on direction but raised
       const kneePos = basePos
         .clone()
-        .add(direction.clone().multiplyScalar(legData.segmentLengths[0]));
+        .add(restDirection.clone().multiplyScalar(legData.segmentLengths[0]));
       kneePos.y += 0.5; // Raise knee joint
       fabrikSolver.current.restPose[1].copy(kneePos);
 
       // Ankle position
       const anklePos = kneePos
         .clone()
-        .add(direction.clone().multiplyScalar(legData.segmentLengths[1]));
+        .add(restDirection.clone().multiplyScalar(legData.segmentLengths[1]));
       fabrikSolver.current.restPose[2].copy(anklePos);
 
       // Foot position (end effector)
       const footRestPos = anklePos
         .clone()
-        .add(direction.clone().multiplyScalar(legData.segmentLengths[2]));
+        .add(restDirection.clone().multiplyScalar(legData.segmentLengths[2]));
       fabrikSolver.current.restPose[3].copy(footRestPos);
     }
 
@@ -391,8 +390,8 @@ const LegWithIK = () => {
 
         stepProgressRef.current++;
         if (stepProgressRef.current >= legData.stepDuration) {
-          isSteppingRef.current = false;
-          footPositionRef.current.copy(legData.targetPos);
+          isSteppingRef.current = false; // <-- Here's where the step ends
+          footPositionRef.current.copy(legData.targetPos); // <-- Sudden position change
         } else {
           const t = stepProgressRef.current / legData.stepDuration;
           footPositionRef.current.lerpVectors(
@@ -429,13 +428,13 @@ const LegWithIK = () => {
           ref.current.position.copy(midpoint);
 
           // Orient to point from start to end
-          ref.current.lookAt(end);
+          // ref.current.lookAt(end);
 
           // Calculate segment length
           const length = start.distanceTo(end);
 
           // Use stable orientation for all segments
-          // stableOrient(ref.current, start, end);
+          stableOrient(ref.current, start, end);
 
           // Set scale - only change length, not width/height
           ref.current.scale.set(0.2, 0.2, length);

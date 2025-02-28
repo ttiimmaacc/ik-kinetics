@@ -9,8 +9,8 @@ const IKDemo = () => {
     <div style={{ width: "100%", height: "100vh", position: "fixed" }}>
       <Canvas camera={{ position: [10, 5, 10], fov: 50 }}>
         <color attach="background" args={["skyblue"]} />
-        <ambientLight intensity={0.4} />
-        <directionalLight position={[1, 1, 1]} intensity={3} castShadow />
+        <ambientLight intensity={0.8} />
+        <directionalLight position={[1, 1, 1]} intensity={4} castShadow />
         <pointLight castShadow intensity={20} position={[1, 3, 1]} />
         <Sky sunPosition={[100, 20, 100]} />
         <Ground />

@@ -1,70 +1,100 @@
-# Getting Started with Create React App
+# IK Kinetics
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A React Three Fiber-based demonstration of inverse kinematics (IK) using the FABRIK algorithm to simulate realistic leg movement.
 
-## Available Scripts
+## Overview
 
-In the project directory, you can run:
+IK Kinetics is an interactive 3D visualization that demonstrates how inverse kinematics can be used to create natural-looking limb movements. The project uses the FABRIK (Forward And Backward Reaching Inverse Kinematics) algorithm with constraints, rest pose biasing, and automated stepping behavior.
 
-### `npm start`
+![IK Kinetics Demo](public/demo-screenshot.png)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Features
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- **Interactive IK System**: Real-time response to target position changes
+- **Constraint-based Movement**: Joint angle constraints for realistic motion
+- **Rest Pose Biasing**: Limbs naturally return to a default pose when possible
+- **Dynamic Stepping**: Automatic stepping when targets exceed maximum reach
+- **3D Visualization**: Complete with joints, segments, and interactive controls
+- **Ground Interaction**: Target positions automatically mapped to ground level
 
-### `npm test`
+## Technical Implementation
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+The project implements several advanced techniques:
 
-### `npm run build`
+- **FABRIK Algorithm**: Custom implementation with iterative solving
+- **Natural Constraints**: Joint limits prevent unnatural poses
+- **Stable Orientation**: Special handling to avoid rotation artifacts
+- **Raycasting**: Ground detection for accurate foot placement
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Getting Started
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Prerequisites
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- Node.js (version 16 or higher)
+- npm or yarn
 
-### `npm run eject`
+### Installation
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+1. Clone the repository:
+```bash
+git clone [repository-url]
+cd ik-kinetics
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+2. Install dependencies:
+```bash
+npm install
+# or
+yarn
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+3. Start the development server:
+```bash
+npm start
+# or
+yarn start
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+4. Open your browser to `http://localhost:3000`
 
-## Learn More
+## Usage
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- **Moving the Body**: Use the transform controls (yellow gizmo) to move the body sphere
+- **Leg Target**: The yellow sphere attached to the body determines where the leg tries to reach
+- **Observing IK**: Watch how the leg segments (brown boxes) adjust automatically
+- **Step Behavior**: When the target exceeds maximum reach, the foot will step to the new position
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Project Structure
 
-### Code Splitting
+- **IKDemo.jsx**: Main container component with 3D environment setup
+- **LegWithIK.jsx**: Core implementation of the FABRIK algorithm and leg behavior
+- **Ground.jsx**: Simple ground plane for interaction
+- **SkeletonHelper.jsx**: Helper component for visualizing joints and connections
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## Technologies
 
-### Analyzing the Bundle Size
+- [React](https://reactjs.org/) (v19.0.0)
+- [Three.js](https://threejs.org/) (v0.160.0)
+- [@react-three/fiber](https://github.com/pmndrs/react-three-fiber) (v9.0.4)
+- [@react-three/drei](https://github.com/pmndrs/drei) (v10.0.1)
+- [Leva](https://github.com/pmndrs/leva) (v0.10.0) for parameter controls
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## How It Works
 
-### Making a Progressive Web App
+The FABRIK algorithm works by alternating between forward and backward passes through the kinematic chain:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+1. **Forward Pass**: Starting from the target, each joint is positioned toward the root
+2. **Backward Pass**: Starting from the root, each joint is positioned toward the target
+3. **Constraints**: After each pass, constraints are applied to maintain natural poses
+4. **Rest Pose Bias**: A subtle force pulls joints toward a predefined rest pose
 
-### Advanced Configuration
+The stepping behavior activates when the target is beyond the maximum reach of the leg, creating a simple yet effective locomotion system.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## License
 
-### Deployment
+[MIT License](LICENSE)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## Acknowledgments
 
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- The FABRIK algorithm was first described by Andreas Aristidou and Joan Lasenby
+- Thanks to the React Three Fiber community for their excellent 3D libraries
