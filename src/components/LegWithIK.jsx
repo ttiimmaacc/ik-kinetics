@@ -12,7 +12,7 @@ class FABRIK {
     
     // Define angle constraints for each joint (in radians)
     this.constraints = [
-      { min: 0, max: Math.PI/3 }, // Hip joint
+      { min: -Math.PI/6, max: Math.PI/3 }, // Hip joint
       { min: -Math.PI/3, max: Math.PI/2 }, // Knee joint
       { min: -Math.PI/1, max: Math.PI/1 }  // Ankle joint
     ];
@@ -20,14 +20,14 @@ class FABRIK {
 
   // Apply constraints to angle between segments
   applyConstraints() {
-    for (let i = 1; i < this.joints.length - 1; i++) {
+    for (let i = 1; i < this.joints.length - 1; i++) { // loop through each joint (except the first and last)
       const prev = this.joints[i-1];
-      const current = this.joints[i];
+      const current = this.joints[i]; // For each joint, we look at the previous, current & next joints
       const next = this.joints[i+1];
       
       // Get vectors representing the segments
-      const v1 = new THREE.Vector3().subVectors(current, prev);
-      const v2 = new THREE.Vector3().subVectors(next, current);
+      const v1 = new THREE.Vector3().subVectors(current, prev); // vector from previous to current joint
+      const v2 = new THREE.Vector3().subVectors(next, current); // vector from current to next joint
       
       // Calculate angle between segments
       const angle = v1.angleTo(v2);
@@ -163,10 +163,10 @@ const LegWithIK = () => {
       joints: Array(4)
         .fill()
         .map(() => new THREE.Vector3()),
-      segmentLengths: [1, 0.5, 1],
+      segmentLengths: [0.8, 1, 0.8],
       targetPos: new THREE.Vector3(),
       maxStretch: 1.5, // Maximum distance before leg steps
-      stepDuration: 10, // Keeping your original value
+      stepDuration: 15, // Keeping your original value
       bodyOffset: new THREE.Vector3(-0.25, 0, 0),
     }),
     []
@@ -242,7 +242,7 @@ const LegWithIK = () => {
         legData.targetPos
       );
 
-      // KEEPING YOUR ORIGINAL STEPPING LOGIC as requested
+      // Stepping logic when distance exceeds max stretch
       if (distanceToTarget > legData.maxStretch || isSteppingRef.current) {
         if (!isSteppingRef.current) {
           isSteppingRef.current = true;
@@ -310,7 +310,7 @@ const LegWithIK = () => {
           <meshStandardMaterial color="#8B4513" />
 
           {/* Target point attached to body */}
-          <mesh ref={targetRef} position={[-1, 0, 0]}>
+          <mesh ref={targetRef} position={[-1.5, 0, 0]}>
             <sphereGeometry args={[0.1]} />
             <meshStandardMaterial color="yellow" />
           </mesh>
