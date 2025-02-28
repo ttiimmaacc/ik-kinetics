@@ -13,14 +13,14 @@ class FABRIK {
 
     // Define angle constraints for each joint (in radians)
     this.constraints = [
-      { min: -Math.PI / 6, max: Math.PI / 3 }, // Hip joint
-      { min: -Math.PI / 3, max: Math.PI / 2 }, // Knee joint
-      { min: -Math.PI / 1, max: Math.PI / 1 }, // Ankle joint
+      { min: -Math.PI / 12, max: Math.PI / 1 }, // Hip joint
+      { min: -Math.PI / 12, max: Math.PI / 3 }, // Knee joint
+      { min: -Math.PI / 0, max: Math.PI / 2 }, // Ankle joint
     ];
 
     // Rest pose bias strength (0-1)
     // Higher values make the leg return to rest pose more strongly
-    this.restPoseBias = 0.3;
+    this.restPoseBias = 0.09;
   }
 
   // Apply constraints to angle between segments
@@ -119,7 +119,9 @@ class FABRIK {
 
     // If target is unreachable, stretch the chain as far as possible
     if (!targetReachable) {
-      const direction = new THREE.Vector3().subVectors(targetVector, rootPos).normalize();
+      const direction = new THREE.Vector3()
+        .subVectors(targetVector, rootPos)
+        .normalize();
 
       // Position joints in a straight line toward target
       let currentPos = rootPos.clone();
@@ -318,6 +320,28 @@ const LegWithIK = () => {
     }
   };
 
+  // Stable orientation function that prevents y-axis flipping
+  function stableOrient(object, startPoint, endPoint) {
+    // Get direction vector from start to end
+    const direction = new THREE.Vector3()
+      .subVectors(endPoint, startPoint)
+      .normalize();
+
+    // Calculate the yaw (horizontal angle around Y axis)
+    const yaw = Math.atan2(direction.x, direction.z);
+
+    // Calculate the pitch (vertical angle)
+    const horizontalLength = Math.sqrt(
+      direction.x * direction.x + direction.z * direction.z
+    );
+    const pitch = -Math.atan2(direction.y, horizontalLength);
+
+    // Set rotation using Euler angles with specific order
+    // YXZ order means rotation will be applied in the order: yaw (Y), pitch (X), roll (Z)
+    const euler = new THREE.Euler(pitch, yaw, 0, "YXZ");
+    object.quaternion.setFromEuler(euler);
+  }
+
   useFrame(() => {
     if (!bodyRef.current || !targetRef.current) return;
 
@@ -331,7 +355,7 @@ const LegWithIK = () => {
     // Raycast to find ground intersection
     const raycaster = new THREE.Raycaster(
       targetWorldPos,
-      new THREE.Vector3(0, -1, 0)
+      new THREE.Vector3(0, -0.8, 0)
     );
     const intersects = raycaster.intersectObjects(
       scene.children.filter((child) => child.name === "ground")
@@ -410,6 +434,9 @@ const LegWithIK = () => {
           // Calculate segment length
           const length = start.distanceTo(end);
 
+          // Use stable orientation for all segments
+          // stableOrient(ref.current, start, end);
+
           // Set scale - only change length, not width/height
           ref.current.scale.set(0.2, 0.2, length);
         }
@@ -420,7 +447,7 @@ const LegWithIK = () => {
   return (
     <group>
       {/* Body with transform controls */}
-      <TransformControls object={bodyRef} mode="translate">
+      <TransformControls object={bodyRef} mode="translate" size="0.5">
         <mesh ref={bodyRef} position={[0, 2.5, 0]}>
           <sphereGeometry args={[0.3]} />
           <meshStandardMaterial color="#8B4513" />
@@ -462,10 +489,10 @@ const LegWithIK = () => {
           <meshStandardMaterial
             color={
               i === 0
-                ? "#553311" // Femur - brown
+                ? "#331100" // Femur - darkest brown
                 : i === 1
                 ? "#442200" // Tibia - darker brown
-                : "#331100" // Tarsus - darkest brown
+                : "#AA6622" // Tarsus - brown
             }
           />
         </mesh>
