@@ -20,12 +20,13 @@ class FABRIK {
 
     // Rest pose bias strength (0-1)
     // Higher values make the leg return to rest pose more strongly
-    this.restPoseBias = 0.1;
+    this.restPoseBias = 0.12;
   }
 
   // Apply constraints to angle between segments
   applyConstraints() {
-    for (let i = 1; i < this.joints.length - 1; i++) {// <-- loop through each joint (except the first and last)
+    for (let i = 1; i < this.joints.length - 1; i++) {
+      // <-- loop through each joint (except the first and last)
       const prev = this.joints[i - 1];
       const current = this.joints[i]; // <-- For each joint, we look at the previous, current & next joints
       const next = this.joints[i + 1];
@@ -227,7 +228,7 @@ const LegWithIK = () => {
       segmentLengths: [0.8, 1, 0.9],
       targetPos: new THREE.Vector3(),
       maxStretch: 1.5, // <-- Maximum distance before leg steps
-      stepDuration: 15, 
+      stepDuration: 15,
       bodyOffset: new THREE.Vector3(-0.25, 0, 0),
     }),
     []
@@ -237,7 +238,7 @@ const LegWithIK = () => {
     // Initial joint positions forming a typical spider leg shape
     // This will also serve as our rest pose
     const initialJoints = [
-      new THREE.Vector3(0, 0, 0),   // <-- Hip
+      new THREE.Vector3(0, 0, 0), // <-- Hip
       new THREE.Vector3(-1, 0.5, 0), // <-- Knee (slightly up)
       new THREE.Vector3(-2.5, 0, 0), // <-- Ankle
       new THREE.Vector3(-3.5, 0, 0), // <-- Foot
@@ -252,8 +253,8 @@ const LegWithIK = () => {
       if (fabrikSolver.current) {
         // Define our ideal rest pose - can be adjusted as needed
         const restPose = [
-          new THREE.Vector3(0, 0, 0),   // <--  Hip (fixed)
-          new THREE.Vector3(-1, 0.5, 0), // <--  Knee - slightly raised
+          new THREE.Vector3(0, 0, 0), // <--  Hip (fixed)
+          new THREE.Vector3(1, 0.5, 0), // <--  Knee - slightly raised
           new THREE.Vector3(-2.5, 0, 0), // <--  Ankle
           new THREE.Vector3(-3.5, 0, 0), // <--  Foot
         ];
@@ -406,6 +407,19 @@ const LegWithIK = () => {
       const basePos = new THREE.Vector3();
       body.getWorldPosition(basePos);
       basePos.add(legData.bodyOffset);
+
+      // Limit body vertical movement
+      if (body.position.y < 0.5) {
+        // Prevent body from going through floor
+        body.position.y = 0.5;
+      }
+
+      // Calculate the maximum height based on leg reach
+      const maxHeight =
+        legData.targetPos.y + fabrikSolver.current.totalLength * 0.9;
+      if (body.position.y > maxHeight) {
+        body.position.y = maxHeight;
+      }
 
       // Calculate leg positions based on FABRIK
       updateLegPositions(basePos, footPositionRef.current);
