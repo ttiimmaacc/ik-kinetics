@@ -447,7 +447,7 @@ const LegWithIK = () => {
     <group>
       {/* Body with transform controls */}
       <TransformControls object={bodyRef} mode="translate" size="0.5">
-        <mesh ref={bodyRef} position={[0, 2.5, 0]}>
+        <mesh ref={bodyRef} position={[0, 2.5, 0]} castShadow>
           <sphereGeometry args={[0.3]} />
           <meshStandardMaterial color="#8B4513" />
 
@@ -467,7 +467,7 @@ const LegWithIK = () => {
 
       {/* Joint visualizations */}
       {jointRefs.current.map((ref, i) => (
-        <mesh key={`joint-${i}`} ref={ref}>
+        <mesh key={`joint-${i}`} ref={ref} castShadow>
           <sphereGeometry args={[0.1]} />
           <meshStandardMaterial
             color={
@@ -483,7 +483,7 @@ const LegWithIK = () => {
 
       {/* Leg segments */}
       {segmentRefs.current.map((ref, i) => (
-        <mesh key={`segment-${i}`} ref={ref}>
+        <mesh key={`segment-${i}`} ref={ref} castShadow>
           <boxGeometry args={[1, 1, 1]} />
           <meshStandardMaterial
             color={

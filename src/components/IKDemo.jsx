@@ -7,11 +7,13 @@ import LegWithIK from "./LegWithIK";
 const IKDemo = () => {
   return (
     <div style={{ width: "100%", height: "100vh", position: "fixed" }}>
-      <Canvas camera={{ position: [10, 5, 10], fov: 50 }}>
+      <Canvas shadows camera={{ position: [10, 5, 10], fov: 50 }}>
         <color attach="background" args={["skyblue"]} />
         <ambientLight intensity={0.8} />
-        <directionalLight position={[1, 1, 1]} intensity={4} castShadow />
-        <pointLight castShadow intensity={20} position={[1, 3, 1]} />
+        <directionalLight position={[1, 1, 1]} intensity={4} castShadow shadow-mapSize={[2048, 2048]}>  
+        <orthographicCamera attach="shadow-camera" args={[-10, 10, 10, -10, 0.1, 20]} />
+      </directionalLight>
+        <pointLight castShadow intensity={20} position={[1, 3, 1]} shadow-mapSize={[1024, 1024]} shadow-bias={-0.001} />
         <Sky sunPosition={[100, 20, 100]} />
         <Ground />
         <LegWithIK />
