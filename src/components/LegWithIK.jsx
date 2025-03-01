@@ -13,9 +13,20 @@ class FABRIK {
 
     // Define angle constraints for each joint (in radians)
     this.constraints = [
-      { min: -Math.PI / 12, max: Math.PI / 1 }, // <-- Hip joint
-      { min: -Math.PI / 12, max: Math.PI / 3 }, // <-- Knee joint
-      { min: -Math.PI / 0, max: Math.PI / 2 }, // <-- Ankle joint
+      { min: -Math.PI / 1, max: Math.PI / 2 }, // <-- Hip joint (-9 degrees to 360 degrees)
+      { min: -Math.PI / 12, max: Math.PI / 3 }, // <-- Knee joint (15 degrees of backward bending)
+      { min: -Math.PI / 0, max: Math.PI / 2 }, // <-- Ankle joint (-infinity to 90 degrees)
+    ];
+
+    // Define directional constraints for each joint (in radians)
+    this.directionalConstraints = [
+      null, // <-- Hip joint
+      null, // <-- Knee joint
+      {
+        axis: new THREE.Vector3(1, 0, 1), // Local Z axis
+        minAngle: -Math.PI / 3, // Limit backward bending
+        maxAngle: Math.PI / 2, // Allow forward bending
+      },
     ];
 
     // Rest pose bias strength (0-1)
@@ -67,6 +78,68 @@ class FABRIK {
 
       // Set the new position of the next joint
       next.copy(current).add(v2);
+    }
+  }
+
+  // Apply directional constraints to prevent unnatural joint rotations
+  applyDirectionalConstraints() {
+    for (let i = 1; i < this.joints.length - 1; i++) {
+      // Start with ankle (index 2)
+      if (!this.directionalConstraints[i]) continue;
+
+      // Get the joint positions
+      const prev = this.joints[i - 1]; // Knee
+      const current = this.joints[i]; // Ankle
+      const next = this.joints[i + 1]; // Foot
+
+      // Calculate segment vectors
+      const segmentUp = new THREE.Vector3()
+        .subVectors(current, prev)
+        .normalize();
+      const segmentDown = new THREE.Vector3()
+        .subVectors(next, current)
+        .normalize();
+
+      // Create a local coordinate system for the joint
+      const forward = new THREE.Vector3().copy(segmentUp);
+      const right = new THREE.Vector3(0, 1, 0).cross(forward).normalize();
+      const up = new THREE.Vector3().crossVectors(forward, right).normalize();
+
+      // Project the downward segment onto the forward-up plane
+      const projectedVector = new THREE.Vector3();
+      projectedVector.copy(segmentDown);
+      const rightComponent = right.dot(segmentDown);
+      projectedVector.sub(right.clone().multiplyScalar(rightComponent));
+      projectedVector.normalize();
+
+      // Calculate angle between forward and projected vector in the forward-up plane
+      const angle = Math.atan2(
+        projectedVector.dot(up),
+        projectedVector.dot(forward)
+      );
+
+      // Apply constraints if needed
+      const constraint = this.directionalConstraints[i];
+      if (angle < constraint.minAngle || angle > constraint.maxAngle) {
+        // Constrain the angle
+        const constrainedAngle =
+          angle < constraint.minAngle
+            ? constraint.minAngle
+            : constraint.maxAngle;
+
+        // Create a new vector at the constrained angle
+        const constrainedVector = new THREE.Vector3()
+          .copy(forward)
+          .multiplyScalar(Math.cos(constrainedAngle))
+          .addScaledVector(up, Math.sin(constrainedAngle));
+
+        // Restore the right component to maintain the 3D orientation
+        constrainedVector.addScaledVector(right, rightComponent);
+        constrainedVector.normalize();
+
+        // Adjust the next joint position
+        next.copy(current).addScaledVector(constrainedVector, this.lengths[i]);
+      }
     }
   }
 
@@ -133,6 +206,9 @@ class FABRIK {
       // Apply constraints to make the pose more natural
       this.applyConstraints();
 
+      // Apply directional constraints to prevent unnatural ankle bending
+      this.applyDirectionalConstraints();
+
       // Apply mild rest pose bias for unreachable targetssss
       this.applyRestPoseBias(currentBias);
       return;
@@ -177,6 +253,9 @@ class FABRIK {
       // Apply constraints to maintain natural poses
       this.applyConstraints();
 
+      // Apply directional constraints to prevent unnatural ankle bending
+      this.applyDirectionalConstraints();
+
       // Apply rest pose bias
       this.applyRestPoseBias(currentBias);
 
@@ -220,6 +299,9 @@ const LegWithIK = () => {
 
   const fabrikSolver = useRef(null);
 
+  const bodyHeightOffsetRef = useRef(1.5); // Desired height above ground
+  const groundHeightBelowBodyRef = useRef(0); // Current ground height below body
+
   const legData = useMemo(
     () => ({
       joints: Array(4)
@@ -227,7 +309,7 @@ const LegWithIK = () => {
         .map(() => new THREE.Vector3()),
       segmentLengths: [0.8, 1, 0.9],
       targetPos: new THREE.Vector3(),
-      maxStretch: 1.5, // <-- Maximum distance before leg steps
+      maxStretch: 1.8, // <-- Maximum distance before leg steps // side step: 1
       stepDuration: 15,
       bodyOffset: new THREE.Vector3(-0.25, 0, 0),
     }),
@@ -358,7 +440,9 @@ const LegWithIK = () => {
       new THREE.Vector3(0, -0.8, 0)
     );
     const intersects = raycaster.intersectObjects(
-      scene.children.filter((child) => child.name === "ground")
+      scene.children.filter(
+        (child) => child.name && child.name.startsWith("ground")
+      )
     );
 
     if (intersects.length > 0) {
@@ -403,23 +487,44 @@ const LegWithIK = () => {
         }
       }
 
-      // Get body position and apply offset
+      // Get body position
       const basePos = new THREE.Vector3();
       body.getWorldPosition(basePos);
+
+      // Raycast to find ground height below body
+      const bodyRaycaster = new THREE.Raycaster(
+        new THREE.Vector3(basePos.x, basePos.y + 5, basePos.z), // Start from above
+        new THREE.Vector3(0, -1, 0) // Cast downward
+      );
+      const bodyGroundIntersects = bodyRaycaster.intersectObjects(
+        scene.children.filter(
+          (child) => child.name && child.name.startsWith("ground")
+        )
+      );
+
+      // Update ground height and body position
+      if (bodyGroundIntersects.length > 0) {
+        // Get ground height at body position
+        const groundHeight = bodyGroundIntersects[0].point.y;
+        groundHeightBelowBodyRef.current = groundHeight;
+
+        // Calculate target height
+        const targetBodyHeight = groundHeight + bodyHeightOffsetRef.current;
+
+        // Smoothly adjust body height (lerp factor controls smoothness - adjust as needed)
+        const currentPos = body.position.clone();
+        const newY = THREE.MathUtils.lerp(
+          currentPos.y,
+          targetBodyHeight,
+          0.1 // Smoothing factor - higher values make movement more immediate
+        );
+
+        // Apply new height, preserving X and Z positions
+        body.position.setY(newY);
+      }
+
+      // Now add the body offset for leg positioning
       basePos.add(legData.bodyOffset);
-
-      // Limit body vertical movement
-      if (body.position.y < 0.5) {
-        // Prevent body from going through floor
-        body.position.y = 0.5;
-      }
-
-      // Calculate the maximum height based on leg reach
-      const maxHeight =
-        legData.targetPos.y + fabrikSolver.current.totalLength * 0.9;
-      if (body.position.y > maxHeight) {
-        body.position.y = maxHeight;
-      }
 
       // Calculate leg positions based on FABRIK
       updateLegPositions(basePos, footPositionRef.current);
@@ -462,7 +567,7 @@ const LegWithIK = () => {
       {/* Body with transform controls */}
       <TransformControls object={bodyRef} mode="translate" size="0.5">
         <mesh ref={bodyRef} position={[0, 1.9, 0]} castShadow>
-          <sphereGeometry args={[0.3]} />
+          <boxGeometry args={[0.5, 0.5, 1]} />
           <meshStandardMaterial color="#8B4513" />
 
           {/* Target point attached to body */}
