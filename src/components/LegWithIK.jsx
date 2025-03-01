@@ -13,14 +13,14 @@ class FABRIK {
 
     // Define angle constraints for each joint (in radians)
     this.constraints = [
-      { min: -Math.PI / 12, max: Math.PI / 1 }, // Hip joint
-      { min: -Math.PI / 12, max: Math.PI / 3 }, // Knee joint
-      { min: -Math.PI / 0, max: Math.PI / 2 }, // Ankle joint
+      { min: -Math.PI / 12, max: Math.PI / 1 }, // <-- Hip joint
+      { min: -Math.PI / 12, max: Math.PI / 3 }, // <-- Knee joint
+      { min: -Math.PI / 0, max: Math.PI / 2 }, // <-- Ankle joint
     ];
 
     // Rest pose bias strength (0-1)
     // Higher values make the leg return to rest pose more strongly
-    this.restPoseBias = 0.09;
+    this.restPoseBias = 0.1;
   }
 
   // Apply constraints to angle between segments
@@ -224,10 +224,10 @@ const LegWithIK = () => {
       joints: Array(4)
         .fill()
         .map(() => new THREE.Vector3()),
-      segmentLengths: [0.8, 1, 0.8],
+      segmentLengths: [0.8, 1, 0.9],
       targetPos: new THREE.Vector3(),
-      maxStretch: 1.5, // Maximum distance before leg steps
-      stepDuration: 15, // Keeping your original value
+      maxStretch: 1.5, // <-- Maximum distance before leg steps
+      stepDuration: 15, 
       bodyOffset: new THREE.Vector3(-0.25, 0, 0),
     }),
     []
@@ -237,10 +237,10 @@ const LegWithIK = () => {
     // Initial joint positions forming a typical spider leg shape
     // This will also serve as our rest pose
     const initialJoints = [
-      new THREE.Vector3(0, 0, 0), // Hip
-      new THREE.Vector3(1, 0.5, 0), // Knee (slightly up)
-      new THREE.Vector3(2.5, 0, 0), // Ankle
-      new THREE.Vector3(3.5, 0, 0), // Foot
+      new THREE.Vector3(0, 0, 0),   // <-- Hip
+      new THREE.Vector3(-1, 0.5, 0), // <-- Knee (slightly up)
+      new THREE.Vector3(-2.5, 0, 0), // <-- Ankle
+      new THREE.Vector3(-3.5, 0, 0), // <-- Foot
     ];
     fabrikSolver.current = new FABRIK(initialJoints, legData.segmentLengths);
 
@@ -252,10 +252,10 @@ const LegWithIK = () => {
       if (fabrikSolver.current) {
         // Define our ideal rest pose - can be adjusted as needed
         const restPose = [
-          new THREE.Vector3(0, 0, 0), // Hip (fixed)
-          new THREE.Vector3(1, 0.5, 0), // Knee - slightly raised
-          new THREE.Vector3(2.5, 0, 0), // Ankle
-          new THREE.Vector3(3.5, 0, 0), // Foot
+          new THREE.Vector3(0, 0, 0),   // <--  Hip (fixed)
+          new THREE.Vector3(-1, 0.5, 0), // <--  Knee - slightly raised
+          new THREE.Vector3(-2.5, 0, 0), // <--  Ankle
+          new THREE.Vector3(-3.5, 0, 0), // <--  Foot
         ];
 
         for (let i = 0; i < restPose.length; i++) {
@@ -447,7 +447,7 @@ const LegWithIK = () => {
     <group>
       {/* Body with transform controls */}
       <TransformControls object={bodyRef} mode="translate" size="0.5">
-        <mesh ref={bodyRef} position={[0, 2.5, 0]} castShadow>
+        <mesh ref={bodyRef} position={[0, 1.9, 0]} castShadow>
           <sphereGeometry args={[0.3]} />
           <meshStandardMaterial color="#8B4513" />
 
