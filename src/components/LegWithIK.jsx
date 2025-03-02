@@ -299,8 +299,12 @@ const LegWithIK = () => {
 
   const fabrikSolver = useRef(null);
 
-  const bodyHeightOffsetRef = useRef(1.5); // Desired height above ground
-  const groundHeightBelowBodyRef = useRef(0); // Current ground height below body
+  const targetGizmoRef = useRef();
+  const prevTargetPositionRef = useRef(new THREE.Vector3());
+  const isTargetMovingRef = useRef(false);
+  const moveBodyToTargetRef = useRef(false);
+  const bodyHeightOffsetRef = useRef(1);
+  const bodyMovementSpeedRef = useRef(0.2); 
 
   const legData = useMemo(
     () => ({
@@ -310,7 +314,7 @@ const LegWithIK = () => {
       segmentLengths: [0.8, 1, 0.9],
       targetPos: new THREE.Vector3(),
       maxStretch: 1.8, // <-- Maximum distance before leg steps // side step: 1
-      stepDuration: 15,
+      stepDuration: 10,
       bodyOffset: new THREE.Vector3(-0.25, 0, 0),
     }),
     []
@@ -424,8 +428,100 @@ const LegWithIK = () => {
     object.quaternion.setFromEuler(euler);
   }
 
+  // Check if target gizmo has stopped moving
+  const checkTargetMovement = () => {
+    if (!targetGizmoRef.current) return;
+
+    const targetPosition = new THREE.Vector3();
+    targetGizmoRef.current.getWorldPosition(targetPosition);
+
+    // If position changed
+    if (!targetPosition.equals(prevTargetPositionRef.current)) {
+      isTargetMovingRef.current = true;
+      prevTargetPositionRef.current.copy(targetPosition);
+    }
+    // If position stopped changing
+    else if (isTargetMovingRef.current) {
+      isTargetMovingRef.current = false;
+      moveBodyToTargetRef.current = true; // Start moving body
+    }
+  };
+
+  // Move body toward target
+  const moveBodyTowardTarget = () => {
+    if (
+      !moveBodyToTargetRef.current ||
+      !bodyRef.current ||
+      !targetGizmoRef.current
+    )
+      return;
+
+    const bodyPosition = new THREE.Vector3();
+    bodyRef.current.getWorldPosition(bodyPosition);
+
+    const targetPosition = new THREE.Vector3();
+    targetGizmoRef.current.getWorldPosition(targetPosition);
+
+    // Calculate direction on XZ plane only
+    const direction = new THREE.Vector3(
+      targetPosition.x - bodyPosition.x,
+      0,
+      targetPosition.z - bodyPosition.z
+    );
+
+    // Check if we've reached the target
+    const distanceToTarget = direction.length();
+    if (distanceToTarget < 0.1) {
+      moveBodyToTargetRef.current = false;
+      return;
+    }
+
+    // Move toward target
+    direction.normalize().multiplyScalar(bodyMovementSpeedRef.current);
+    bodyRef.current.position.x += direction.x;
+    bodyRef.current.position.z += direction.z;
+  };
+
+  // Adapt body height to terrain
+  const adaptBodyToTerrain = () => {
+    if (!bodyRef.current) return;
+
+    const bodyPosition = new THREE.Vector3();
+    bodyRef.current.getWorldPosition(bodyPosition);
+
+    // Raycast downward to find ground
+    const bodyRaycaster = new THREE.Raycaster(
+      new THREE.Vector3(bodyPosition.x, bodyPosition.y + 5, bodyPosition.z),
+      new THREE.Vector3(0, -1, 0)
+    );
+
+    const bodyGroundIntersects = bodyRaycaster.intersectObjects(
+      scene.children.filter(
+        (child) => child.name && child.name.startsWith("ground")
+      )
+    );
+
+    // Update ground height and body position
+    if (bodyGroundIntersects.length > 0) {
+      const groundHeight = bodyGroundIntersects[0].point.y; // Get ground height at body position
+      const targetHeight = groundHeight + bodyHeightOffsetRef.current; // Calculate target height
+
+      // Smoothly adjust height
+      bodyRef.current.position.y = THREE.MathUtils.lerp(
+        bodyRef.current.position.y,
+        targetHeight,
+        0.1 // <-- Smoothing factor - higher values make movement more immediate
+      );
+    }
+  };
+
   useFrame(() => {
     if (!bodyRef.current || !targetRef.current) return;
+
+    // Target movement and body motion
+    checkTargetMovement();
+    moveBodyTowardTarget();
+    adaptBodyToTerrain();
 
     const body = bodyRef.current;
     const target = targetRef.current;
@@ -491,38 +587,6 @@ const LegWithIK = () => {
       const basePos = new THREE.Vector3();
       body.getWorldPosition(basePos);
 
-      // Raycast to find ground height below body
-      const bodyRaycaster = new THREE.Raycaster(
-        new THREE.Vector3(basePos.x, basePos.y + 5, basePos.z), // Start from above
-        new THREE.Vector3(0, -1, 0) // Cast downward
-      );
-      const bodyGroundIntersects = bodyRaycaster.intersectObjects(
-        scene.children.filter(
-          (child) => child.name && child.name.startsWith("ground")
-        )
-      );
-
-      // Update ground height and body position
-      if (bodyGroundIntersects.length > 0) {
-        // Get ground height at body position
-        const groundHeight = bodyGroundIntersects[0].point.y;
-        groundHeightBelowBodyRef.current = groundHeight;
-
-        // Calculate target height
-        const targetBodyHeight = groundHeight + bodyHeightOffsetRef.current;
-
-        // Smoothly adjust body height (lerp factor controls smoothness - adjust as needed)
-        const currentPos = body.position.clone();
-        const newY = THREE.MathUtils.lerp(
-          currentPos.y,
-          targetBodyHeight,
-          0.1 // Smoothing factor - higher values make movement more immediate
-        );
-
-        // Apply new height, preserving X and Z positions
-        body.position.setY(newY);
-      }
-
       // Now add the body offset for leg positioning
       basePos.add(legData.bodyOffset);
 
@@ -565,18 +629,25 @@ const LegWithIK = () => {
   return (
     <group>
       {/* Body with transform controls */}
-      <TransformControls object={bodyRef} mode="translate" size="0.5">
+      <TransformControls object={targetGizmoRef} mode="translate" size={0.5}>
+      <mesh ref={targetGizmoRef} position={[0, 1.9, 1]}>
+        <sphereGeometry args={[0.2]} />
+        <meshStandardMaterial color="yellow" transparent opacity={0.7} />
+      </mesh>
+    </TransformControls> 
+
+       {/* Body without transform controls */}
         <mesh ref={bodyRef} position={[0, 1.9, 0]} castShadow>
           <boxGeometry args={[0.5, 0.5, 1]} />
           <meshStandardMaterial color="#8B4513" />
 
-          {/* Target point attached to body */}
+          {/* Foot target point attached to body */}
           <mesh ref={targetRef} position={[-1.5, 0, 0]}>
             <sphereGeometry args={[0.1]} />
-            <meshStandardMaterial color="yellow" />
+            <meshStandardMaterial transparent opacity={0.2} />
           </mesh>
         </mesh>
-      </TransformControls>
+
 
       {/* Sphere at raycast intersection (foot target) */}
       <mesh ref={sphereRef}>
