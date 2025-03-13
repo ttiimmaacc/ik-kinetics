@@ -3,11 +3,12 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Sky, GizmoHelper, GizmoViewport, GizmoViewcube } from "@react-three/drei";
 import Ground from "./Ground";
 import LegWithIK from "./LegWithIK";
+import IKSpider from "./IKSpider";
 
 const IKDemo = () => {
   return (
     <div style={{ width: "100%", height: "100vh", position: "fixed" }}>
-      <Canvas shadows camera={{ position: [10, 5, 10], fov: 50 }}>
+      <Canvas shadows camera={{ position: [-15, 5, -15], fov: 50 }}>
         <color attach="background" args={["skyblue"]} />
         <ambientLight intensity={0.8} />
         <directionalLight position={[1, 1, 1]} intensity={4} castShadow shadow-mapSize={[2048, 2048]}>  
@@ -17,6 +18,7 @@ const IKDemo = () => {
         <Sky sunPosition={[100, 20, 100]} />
         <Ground />
         <LegWithIK />
+        <IKSpider />
         <OrbitControls makeDefault />
         <gridHelper position={[0,0,0]} />
         <GizmoHelper

@@ -10,12 +10,12 @@ const Ground = () => {
         <planeGeometry args={[20, 20]} />
         <meshStandardMaterial color="#ffffff" side={THREE.DoubleSide} />
       </mesh>
-      <mesh position={[0, -4, 5]} name="ground-1" receiveShadow>
-        <sphereGeometry args={[5]} />
+      <mesh position={[0, -8, 5]} name="ground-1" receiveShadow>
+        <sphereGeometry args={[10]} />
         <meshStandardMaterial color="#cccccc" />
       </mesh>
-      <mesh position={[5, -3, 5]} name="ground-2" receiveShadow>
-        <sphereGeometry args={[5]} />
+      <mesh position={[5, -6, 5]} name="ground-2" receiveShadow>
+        <sphereGeometry args={[10]} />
         <meshStandardMaterial color="#cccccc" />
       </mesh>
     </>

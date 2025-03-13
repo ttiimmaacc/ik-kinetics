@@ -277,9 +277,9 @@ class FABRIK {
   }
 }
 
-const LegWithIK = () => {
+const IKSpider = () => {
   const { scene } = useThree();
-  
+
   const segmentRefs = useRef(
     Array(3)
       .fill()
@@ -315,8 +315,8 @@ const LegWithIK = () => {
       segmentLengths: [0.8, 1, 0.9],
       targetPos: new THREE.Vector3(),
       maxStretch: 1.8, // <-- Maximum distance before leg steps // side step: 1
-      stepDuration: 10,
-      bodyOffset: new THREE.Vector3(-0.25, 0, -0.25),
+      stepDuration: 8,
+      bodyOffset: new THREE.Vector3(0.25, 0, 0.25),
     }),
     []
   );
@@ -326,9 +326,9 @@ const LegWithIK = () => {
     // This will also serve as our rest pose
     const initialJoints = [
       new THREE.Vector3(0, 0, 0), // <-- Hip
-      new THREE.Vector3(-1, 0.5, 0), // <-- Knee (slightly up)
-      new THREE.Vector3(-2.5, 0, 0), // <-- Ankle
-      new THREE.Vector3(-3.5, 0, 0), // <-- Foot
+      new THREE.Vector3(1, 0.5, 0), // <-- Knee (slightly up)
+      new THREE.Vector3(2.5, 0, 0), // <-- Ankle
+      new THREE.Vector3(3.5, 0, 0), // <-- Foot
     ];
     fabrikSolver.current = new FABRIK(initialJoints, legData.segmentLengths);
 
@@ -511,7 +511,7 @@ const LegWithIK = () => {
       bodyRef.current.position.y = THREE.MathUtils.lerp(
         bodyRef.current.position.y,
         targetHeight,
-        0.1 // <-- Smoothing factor - higher values make movement more immediate
+        0.2 // <-- Smoothing factor - higher values make movement more immediate
       );
     }
   };
@@ -631,24 +631,23 @@ const LegWithIK = () => {
     <group>
       {/* Body with transform controls */}
       <TransformControls object={targetGizmoRef} mode="translate" size={0.5}>
-      <mesh ref={targetGizmoRef} position={[0, 1.9, 1]}>
-        <sphereGeometry args={[0.2]} />
-        <meshStandardMaterial color="yellow" transparent opacity={0.7} />
-      </mesh>
-    </TransformControls> 
-
-       {/* Body without transform controls */}
-        <mesh ref={bodyRef} position={[0, 1.9, 0]} castShadow>
-          <boxGeometry args={[0.5, 0.5, 1]} />
-          <meshStandardMaterial color="#8B4513" />
-
-          {/* Foot target point attached to body */}
-          <mesh ref={targetRef} position={[-1.5, 0, -0.8]}>
-            <sphereGeometry args={[0.1]} />
-            <meshStandardMaterial transparent opacity={0.2} />
-          </mesh>
+        <mesh ref={targetGizmoRef} position={[0, 1.9, 1]}>
+          <sphereGeometry args={[0.2]} />
+          <meshStandardMaterial color="yellow" transparent opacity={0.7} />
         </mesh>
+      </TransformControls>
 
+      {/* Body without transform controls */}
+      <mesh ref={bodyRef} position={[0, 1.9, 0]} castShadow>
+        <boxGeometry args={[0.5, 0.5, 1]} />
+        <meshStandardMaterial color="#878785" />
+
+        {/* Foot target point attached to body */}
+        <mesh ref={targetRef} position={[1.5, 0, 0.8]}>
+          <sphereGeometry args={[0.1]} />
+          <meshStandardMaterial transparent opacity={0.2} />
+        </mesh>
+      </mesh>
 
       {/* Sphere at raycast intersection (foot target) */}
       <mesh ref={sphereRef}>
@@ -679,10 +678,10 @@ const LegWithIK = () => {
           <meshStandardMaterial
             color={
               i === 0
-                ? "#331100" // Femur - darkest brown
+                ? "#878785" // Femur - darkest brown
                 : i === 1
-                ? "#442200" // Tibia - darker brown
-                : "#AA6622" // Tarsus - brown
+                ? "#878785" // Tibia - darker brown
+                : "#878785" // Tarsus - brown
             }
           />
         </mesh>
@@ -697,4 +696,4 @@ const LegWithIK = () => {
   );
 };
 
-export default LegWithIK;
+export default IKSpider;
