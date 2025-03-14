@@ -352,7 +352,7 @@ const SpiderController = () => {
   const targetGizmoRef = useRef();
   const [isAutoWalking, setIsAutoWalking] = useState(false);
   const bodyHeightOffsetRef = useRef(1.0);
-  const bodyMovementSpeedRef = useRef(0.06);
+  const bodyMovementSpeedRef = useRef(0.03);
   const prevTargetPositionRef = useRef(new THREE.Vector3());
   const isTargetMovingRef = useRef(false);
   const moveBodyToTargetRef = useRef(false);
@@ -455,7 +455,7 @@ const SpiderController = () => {
     <group>
       {/* Main target control */}
       <TransformControls object={targetGizmoRef} mode="translate" size={0.5}>
-        <mesh ref={targetGizmoRef} position={[0, 1.9, 2]}>
+        <mesh ref={targetGizmoRef} position={[0, 1, 0.6]}>
           <sphereGeometry args={[0.2]} />
           <meshStandardMaterial color="yellow" transparent opacity={0.7} />
         </mesh>
