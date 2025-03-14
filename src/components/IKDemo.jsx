@@ -2,8 +2,7 @@ import React from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Sky, GizmoHelper, GizmoViewport, GizmoViewcube } from "@react-three/drei";
 import Ground from "./Ground";
-import LegWithIK from "./LegWithIK";
-import IKSpider from "./IKSpider";
+import SpiderController from "./SpiderController";
 
 const IKDemo = () => {
   return (
@@ -17,8 +16,7 @@ const IKDemo = () => {
         <pointLight castShadow intensity={20} position={[1, 3, 1]} shadow-mapSize={[1024, 1024]} shadow-bias={-0.001} />
         <Sky sunPosition={[100, 20, 100]} />
         <Ground />
-        <LegWithIK />
-        <IKSpider />
+        <SpiderController />
         <OrbitControls makeDefault />
         <gridHelper position={[0,0,0]} />
         <GizmoHelper
